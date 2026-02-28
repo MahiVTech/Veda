@@ -1,0 +1,181 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  background: radial-gradient(circle at center,
+    #08383e 0%,
+    #021418 45%,
+    #000000 80%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.veda-wrapper {
+  position: relative;
+  width: 420px;
+  height: 420px;
+}
+
+/* OUTER BLACK BAND */
+.ring-outer {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 60%, #021418 100%);
+  z-index: 1;
+  animation:
+    rotateOuter 80s linear infinite,
+    pulseOuter 6s ease-in-out infinite;
+}
+
+/* FIXED DOTTED EDGE */
+.dotted-ring {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 2px dotted rgba(0,255,255,0.6);
+  z-index: 4;
+  animation: rotateBorder 90s linear infinite;
+}
+
+/* RING 3 */
+.ring-3 {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  top: 40px;
+  left: 40px;
+  border-radius: 50%;
+  border: 3px solid #00f7ff;
+  z-index: 2;
+  animation: pulseMid 6s ease-in-out infinite;
+}
+
+/* RING 2 */
+.ring-2 {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  top: 80px;
+  left: 80px;
+  border-radius: 50%;
+  border: 3px solid #00f7ff;
+  z-index: 2;
+  animation: pulseInner 6s ease-in-out infinite;
+}
+
+/* CORE */
+.core {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  top: 130px;
+  left: 130px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle,
+    #00f7ff 0%,
+    #004d52 60%,
+    #001114 100%);
+  z-index: 5;
+  animation: breatheCore 6s ease-in-out infinite;
+}
+.core::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255,255,255,0.6) 0%,
+    rgba(255,255,255,0.2) 40%,
+    transparent 70%);
+}
+
+#innerParticles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* GLOW ANIMATIONS */
+
+@keyframes rotateOuter {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotateBorder {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseOuter {
+  0%,100% { box-shadow: 0 0 20px rgba(0,255,255,0.3); }
+  50% { box-shadow: 0 0 60px rgba(0,255,255,0.8); }
+}
+
+@keyframes pulseMid {
+  0%,100% { box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+  50% { box-shadow: 0 0 35px rgba(0,255,255,0.7); }
+}
+
+@keyframes pulseInner {
+  0%,100% { box-shadow: 0 0 10px rgba(0,255,255,0.2); }
+  50% { box-shadow: 0 0 25px rgba(0,255,255,0.6); }
+}
+
+@keyframes breatheCore {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+
+/* Keep your circle styles as they are */
+/* Just remove random absolute positioning */
+
+/* TEXT */
+.ask-text {
+  margin-top: 40px;
+  color: #ffffff;
+  font-size: 22px;
+  font-family: 'Segoe UI', sans-serif;
+  letter-spacing: 1px;
+  text-align: center;
+
+  text-shadow: 0 0 8px #ffffff;
+
+  animation: fade 2.5s ease-in-out infinite;
+}
+
+@keyframes fade {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+/* NEW PROPER WRAPPER */
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;   /* space between circle and text */
+}
+
+/* TEXT */
+.ask-text {
+  color: #ffffff;
+  font-size: 22px;
+  letter-spacing: 1px;
+  text-align: center;
+  text-shadow: 0 0 8px #ffffff;
+  animation: fade 2.5s ease-in-out infinite;
+}
