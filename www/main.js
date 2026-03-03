@@ -83,38 +83,90 @@ window.addEventListener("DOMContentLoaded", () => {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
   }
 
-  function drawWave() {
-    animationId = requestAnimationFrame(drawWave);
+  let idleTime = 0;
 
-    waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+function drawWave() {
 
-    if (!isListening || !analyser) return;
+  animationId = requestAnimationFrame(drawWave);
+  waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
 
-    analyser.getByteTimeDomainData(dataArray);
+  const centerX = waveCanvas.width / 2;
+  const centerY = waveCanvas.height / 2;
 
-    const centerY = waveCanvas.height / 2;
+  const waveWidth = 300;   // how wide wave spreads
+  const segments = 60;     // smoothness
+  const maxHeight = 35;
 
-    waveCtx.beginPath();
-    waveCtx.moveTo(0, centerY);
+  waveCtx.beginPath();
 
-    for (let i = 0; i < dataArray.length; i++) {
-      const x = (i / dataArray.length) * waveCanvas.width;
-      const v = dataArray[i] / 128.0;
-      const y = (v - 1) * 60 + centerY;
-      waveCtx.lineTo(x, y);
+  for (let i = 0; i <= segments; i++) {
+
+    const progress = i / segments;
+    const x = centerX - waveWidth/2 + progress * waveWidth;
+
+    let amplitude;
+
+    if ((isListening || isSpeaking) && analyser) {
+      analyser.getByteFrequencyData(dataArray);
+      amplitude = (dataArray[i] / 255) * maxHeight;
+    } else {
+      // Elegant idle breathing wave
+      amplitude = Math.sin(progress * Math.PI) *
+                  Math.sin(idleTime) * 15;
     }
 
-    const gradient = waveCtx.createLinearGradient(0, 0, waveCanvas.width, 0);
-    gradient.addColorStop(0, "#ff4d6d");
-    gradient.addColorStop(0.5, "#4d79ff");
-    gradient.addColorStop(1, "#00f7ff");
+    const y = centerY - amplitude;
 
-    waveCtx.strokeStyle = gradient;
-    waveCtx.lineWidth = 3;
-    waveCtx.shadowBlur = 25;
-    waveCtx.shadowColor = "#00f7ff";
-    waveCtx.stroke();
+    if (i === 0) {
+      waveCtx.moveTo(x, y);
+    } else {
+      waveCtx.lineTo(x, y);
+    }
   }
+
+  // Mirror bottom part for blob shape
+  for (let i = segments; i >= 0; i--) {
+
+    const progress = i / segments;
+    const x = centerX - waveWidth/2 + progress * waveWidth;
+
+    let amplitude;
+
+    if (isListening && analyser) {
+      amplitude = (dataArray[i] / 255) * maxHeight;
+    } else {
+      amplitude = Math.sin(progress * Math.PI) *
+                  Math.sin(idleTime) * 15;
+    }
+
+    const y = centerY + amplitude;
+    waveCtx.lineTo(x, y);
+  }
+
+  waveCtx.closePath();
+
+  // 💎 Elegant color (matches your UI)
+  const gradient = waveCtx.createLinearGradient(
+  centerX - waveWidth/2,
+  0,
+  centerX + waveWidth/2,
+  0
+);
+
+gradient.addColorStop(0, "rgba(0,0,0,0.2)");
+gradient.addColorStop(0.3, "rgba(180,180,180,0.6)");
+gradient.addColorStop(0.5, "#ffffff");
+gradient.addColorStop(0.7, "rgba(180,180,180,0.6)");
+gradient.addColorStop(1, "rgba(0,0,0,0.2)");
+
+waveCtx.fillStyle = gradient;
+waveCtx.shadowBlur = 35;
+waveCtx.shadowColor = "rgba(255,255,255,0.7)";
+
+  waveCtx.fill();
+
+  idleTime += 0.02;
+}
 
   function stopMic() {
     if (streamRef) {
@@ -149,19 +201,20 @@ window.addEventListener("DOMContentLoaded", () => {
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
-
+      let isSpeaking = false;
       isListening = true;
 
       waveCanvas.classList.remove("hidden");
       waveCanvas.classList.add("active-wave");
 
-      micBtn.style.color = "#ff004f";
-      micBtn.style.textShadow = "0 0 15px #ff004f";
+      micBtn.style.color = "rgba(0,255,255,0.6)";
+      micBtn.style.textShadow = "0 0 15px #ffffff";
 
     } else {
 
       isListening = false;
-
+      cancelAnimationFrame(animationId);
+      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
       waveCanvas.classList.remove("active-wave");
       waveCanvas.classList.add("hidden");
 

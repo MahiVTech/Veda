@@ -141,18 +141,20 @@ body {
    SIRI WAVE
 ================================= */
 
+/* ===============================
+   SIRI WAVE
+================================= */
+
 #siriWaveCanvas {
   width: 800px;
-  height: 200px;
-  margin-top: 40px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  height: 150px;
+  margin-top: 10px;
+  display: block;
+  opacity: 1; /* make visible */
+  filter: drop-shadow(0 0 20px #00f7ff);
 }
 
-.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
+
 
 .active-wave {
   opacity: 1;
