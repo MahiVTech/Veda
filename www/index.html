@@ -4,31 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VEDA</title>
+<link rel="icon" href="assets/img/logo.png"><link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
 <body>
-  <div class="main">
 
-<div class="background-glow"></div>
+<div class="main">
 
-<div class="veda-wrapper">
+    <div class="veda-wrapper">
+        <div class="dotted-ring"></div>
+        <div class="ring-outer"></div>
+        <div class="ring ring-3"></div>
+        <div class="ring ring-2"></div>
 
-    <div class="dotted-ring"></div>
-    <div class="ring-outer"></div>
-    <div class="ring ring-3"></div>
-    <div class="ring ring-2"></div>
-    <div class="core">
-      <canvas id="innerParticles"></canvas>
+        <div class="core">
+            <canvas id="innerParticles"></canvas>
+        </div>
+    </div>
+
+    <div class="ask-text">
+        Ask me anything
+    </div>
+
+    <canvas id="siriWaveCanvas" class="hidden"></canvas>
+
+    <div class="assistant-input">
+        <input type="text" placeholder="type here ..." />
+        <div class="icons">
+            <span id="micBtn"><i class="fa-solid fa-microphone"></i></span>
+            <span><i class="fa-regular fa-comment"></i></span>
+            <span><i class="fa-solid fa-gear"></i></span>
+        </div>
     </div>
 
 </div>
 
-    <div class="ask-text">
-      Ask me anything
-    </div>
-  </div>
 <script src="main.js"></script>
-<script src="/eel.js"></script>
+
 </body>
 </html>
