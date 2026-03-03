@@ -1,8 +1,32 @@
 window.addEventListener("DOMContentLoaded", () => {
 
-  /* ===============================
-     PARTICLE CORE ANIMATION
-  ================================= */
+  function speak(text) {
+
+  if (!text) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.rate = 1;        // speed
+  utterance.pitch = 1;       // tone
+  utterance.volume = 1;      // volume
+
+  // When speaking starts
+  utterance.onstart = () => {
+    if (!isListening) {
+      listeningScreen.classList.remove("hidden");
+      drawWave();
+    }
+  };
+
+  // When speaking ends
+  utterance.onend = () => {
+    stopListening();
+  };
+  const voices = speechSynthesis.getVoices();
+utterance.voice = voices.find(v => v.name.includes("Google"));
+  speechSynthesis.speak(utterance);
+}
+  /* ================= PARTICLES ================= */
 
   const particleCanvas = document.getElementById("innerParticles");
   const pCtx = particleCanvas.getContext("2d");
@@ -52,126 +76,97 @@ window.addEventListener("DOMContentLoaded", () => {
 
   animateParticles();
 
+  /* ================= WAVE ================= */
 
-  /* ===============================
-     JARVIS CINEMATIC WAVE
-  ================================= */
-
+  const micBtn = document.getElementById("micBtn");
+  const micIcon = micBtn.querySelector("i");
+  const assistantInput = document.querySelector(".assistant-input");
+  const listeningScreen = document.getElementById("listeningScreen");
   const waveCanvas = document.getElementById("siriWaveCanvas");
   const waveCtx = waveCanvas.getContext("2d");
 
   waveCanvas.width = 800;
-  waveCanvas.height = 200;
+  waveCanvas.height = 150;
 
   let audioContext = null;
   let analyser = null;
   let dataArray = null;
+  let stream = null;
+
   let animationId = null;
   let isListening = false;
-  let streamRef = null;
+  let time = 0;
 
-  async function initMic() {
-    streamRef = await navigator.mediaDevices.getUserMedia({ audio: true });
+  function drawWave() {
+    animationId = requestAnimationFrame(drawWave);
+    waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+    const centerY = waveCanvas.height / 2;
+    const width = waveCanvas.width;
+
+    let volume = 0;
+
+    if (analyser) {
+      analyser.getByteFrequencyData(dataArray);
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      volume = sum / dataArray.length / 255;
+    }
+
+    function drawLayer(amplitude, wavelength, speed, opacity) {
+      waveCtx.beginPath();
+
+      for (let x = 0; x < width; x++) {
+        const dynamicAmp = amplitude + volume * 60;
+
+        const y =
+          centerY +
+          Math.sin((x + time * speed) * wavelength) *
+          dynamicAmp;
+
+        if (x === 0) waveCtx.moveTo(x, y);
+        else waveCtx.lineTo(x, y);
+      }
+
+      waveCtx.strokeStyle = `rgba(255,255,255,${opacity})`;
+      waveCtx.lineWidth = 1.8;
+      waveCtx.shadowBlur = 8;
+      waveCtx.shadowColor = "rgba(255,255,255,0.6)";
+      waveCtx.stroke();
+    }
+
+    drawLayer(4, 0.018, 1.4, 0.9);
+    drawLayer(7, 0.015, 1.1, 0.5);
+    drawLayer(10, 0.012, 0.8, 0.3);
+
+    time += 0.4;
+  }
+
+  async function startListening() {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
 
-    const source = audioContext.createMediaStreamSource(streamRef);
+    const source = audioContext.createMediaStreamSource(stream);
     source.connect(analyser);
 
-    analyser.fftSize = 512;
+    analyser.fftSize = 256;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    listeningScreen.classList.remove("hidden");
+    listeningScreen.classList.add("active-wave");
+
+    drawWave();
   }
 
-  let idleTime = 0;
+  function stopListening() {
+    cancelAnimationFrame(animationId);
+    animationId = null;
 
-function drawWave() {
-
-  animationId = requestAnimationFrame(drawWave);
-  waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
-
-  const centerX = waveCanvas.width / 2;
-  const centerY = waveCanvas.height / 2;
-
-  const waveWidth = 300;   // how wide wave spreads
-  const segments = 60;     // smoothness
-  const maxHeight = 35;
-
-  waveCtx.beginPath();
-
-  for (let i = 0; i <= segments; i++) {
-
-    const progress = i / segments;
-    const x = centerX - waveWidth/2 + progress * waveWidth;
-
-    let amplitude;
-
-    if ((isListening || isSpeaking) && analyser) {
-      analyser.getByteFrequencyData(dataArray);
-      amplitude = (dataArray[i] / 255) * maxHeight;
-    } else {
-      // Elegant idle breathing wave
-      amplitude = Math.sin(progress * Math.PI) *
-                  Math.sin(idleTime) * 15;
-    }
-
-    const y = centerY - amplitude;
-
-    if (i === 0) {
-      waveCtx.moveTo(x, y);
-    } else {
-      waveCtx.lineTo(x, y);
-    }
-  }
-
-  // Mirror bottom part for blob shape
-  for (let i = segments; i >= 0; i--) {
-
-    const progress = i / segments;
-    const x = centerX - waveWidth/2 + progress * waveWidth;
-
-    let amplitude;
-
-    if (isListening && analyser) {
-      amplitude = (dataArray[i] / 255) * maxHeight;
-    } else {
-      amplitude = Math.sin(progress * Math.PI) *
-                  Math.sin(idleTime) * 15;
-    }
-
-    const y = centerY + amplitude;
-    waveCtx.lineTo(x, y);
-  }
-
-  waveCtx.closePath();
-
-  // 💎 Elegant color (matches your UI)
-  const gradient = waveCtx.createLinearGradient(
-  centerX - waveWidth/2,
-  0,
-  centerX + waveWidth/2,
-  0
-);
-
-gradient.addColorStop(0, "rgba(0,0,0,0.2)");
-gradient.addColorStop(0.3, "rgba(180,180,180,0.6)");
-gradient.addColorStop(0.5, "#ffffff");
-gradient.addColorStop(0.7, "rgba(180,180,180,0.6)");
-gradient.addColorStop(1, "rgba(0,0,0,0.2)");
-
-waveCtx.fillStyle = gradient;
-waveCtx.shadowBlur = 35;
-waveCtx.shadowColor = "rgba(255,255,255,0.7)";
-
-  waveCtx.fill();
-
-  idleTime += 0.02;
-}
-
-  function stopMic() {
-    if (streamRef) {
-      streamRef.getTracks().forEach(track => track.stop());
-      streamRef = null;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
     }
 
     if (audioContext) {
@@ -179,51 +174,50 @@ waveCtx.shadowColor = "rgba(255,255,255,0.7)";
       audioContext = null;
     }
 
-    cancelAnimationFrame(animationId);
+    analyser = null;
+    dataArray = null;
+
+    waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+    listeningScreen.classList.remove("active-wave");
+    listeningScreen.classList.add("hidden");
   }
-
-
-  /* ===============================
-     MIC BUTTON CONTROL
-  ================================= */
-
-  const micBtn = document.getElementById("micBtn");
 
   micBtn.addEventListener("click", async () => {
 
     if (!isListening) {
-
-      if (!audioContext) {
-        await initMic();
-        drawWave();
-      }
-
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-      let isSpeaking = false;
       isListening = true;
+      await startListening();
 
-      waveCanvas.classList.remove("hidden");
-      waveCanvas.classList.add("active-wave");
-
-      micBtn.style.color = "rgba(0,255,255,0.6)";
-      micBtn.style.textShadow = "0 0 15px #ffffff";
+      micBtn.classList.add("active");
+      assistantInput.classList.add("active");
 
     } else {
-
       isListening = false;
-      cancelAnimationFrame(animationId);
-      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
-      waveCanvas.classList.remove("active-wave");
-      waveCanvas.classList.add("hidden");
+      stopListening();
 
-      micBtn.style.color = "#ffffff";
-      micBtn.style.textShadow = "none";
-
-      stopMic();
+      micBtn.classList.remove("active");
+      assistantInput.classList.remove("active");
     }
 
+  });
+  const inputField = document.querySelector(".assistant-input input");
+
+inputField.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const text = inputField.value.trim();
+    speak(text);
+    inputField.value = "";
+  }
+});
+  listeningScreen.addEventListener("click", () => {
+    if (isListening) {
+      isListening = false;
+      stopListening();
+
+      micBtn.classList.remove("active");
+      assistantInput.classList.remove("active");
+    }
   });
 
 });
